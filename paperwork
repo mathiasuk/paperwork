@@ -9,13 +9,13 @@ read docname
 dirname=$(mktemp -d)
 
 # Define options
-options="-p --batch=$dirname/%d.png --batch-prompt --mode Color --resolution $DPI"
+options="-p --format pnm --batch=$dirname/%d.pnm --batch-prompt --mode Color --resolution $DPI"
 
 # Scan
 scanimage $options
 
 # Create output filelist
-find $dirname -name "*.png" | sort -n > $dirname/filelist
+find $dirname -name "*.pnm" | sort -n > $dirname/filelist
 
 # OCR and convert to pdf
 tesseract --oem 1 --dpi $DPI -l deu+eng $dirname/filelist "$HOME/Documents/$docname" pdf
