@@ -2,6 +2,7 @@
 
 DPI=300
 
+
 echo -n "Enter Document name: "
 read docname
 
@@ -9,7 +10,17 @@ read docname
 dirname=$(mktemp -d)
 
 # Define options
-options="-p --format pnm --batch=$dirname/%d.pnm --batch-prompt --mode Color --resolution $DPI"
+options="-d epson2 -p --format pnm --batch=$dirname/%d.pnm --batch-prompt --mode Color --resolution $DPI"
+
+# Set page dimension from $1 if given
+if [ "$1" = "A4" ]; then
+    # Added 0.5mm to standard A4 dimension.
+    options="$options -x 210.5 -y 297.5"
+fi
+if [ "$1" = "A5" ]; then
+    # Added 0.5mm to standard A5 dimension.
+    options="$options -x 149 -y 210.5"
+fi
 
 # Scan
 scanimage $options
@@ -17,8 +28,14 @@ scanimage $options
 # Create output filelist
 find $dirname -name "*.pnm" | sort -n > $dirname/filelist
 
+# Add a 1px border to avoid tesseract errors
+# see https://github.com/tesseract-ocr/tesseract/issues/427
+while read line
+    do mogrify -bordercolor White -border 1x1 "$line"
+done < $dirname/filelist
+
 # OCR and convert to pdf
-tesseract --oem 1 --dpi $DPI -l deu+eng $dirname/filelist "$HOME/Documents/$docname" pdf
+tesseract --oem 1 --dpi $DPI -l deu+eng+fra $dirname/filelist "$HOME/Documents/scans/$docname" pdf
 
 # Cleanup
 if [[ "$dirname" == /tmp/tmp.* ]]; then
